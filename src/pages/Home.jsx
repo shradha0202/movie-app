@@ -6,36 +6,51 @@ function Home() {
   const [searchText, setSearchText] = useState("");
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
-  const [query, setQuery] = useState("avengers"); 
+  const [query, setQuery] = useState("");
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // ---------------- Fetch Movies ----------------
+  // -------- Fetch Movies ----------
   const fetchMovies = async (term, newPage = 1) => {
-    const res = await fetch(
-      `${BASE_URL}?apikey=${API_KEY}&s=${term}&page=${newPage}`
-    );
+    if (!term.trim()) return;
 
-    const data = await res.json();
-    console.log("API DATA:", data);
+    try {
+      setLoading(true);
 
-    if (data.Response === "True") {
-      const total = Math.ceil(data.totalResults / 10);
-      setTotalPages(total);
+      const res = await fetch(
+        `${BASE_URL}?apikey=${API_KEY}&s=${encodeURIComponent(term)}&page=${newPage}`
+      );
+      const data = await res.json();
+      console.log("HOME DATA:", data);
 
-      if (newPage === 1) setMovies(data.Search);
-      else setMovies((prev) => [...prev, ...data.Search]);
-    } else {
-      setMovies([]);
-      setTotalPages(1);
+      if (data.Response === "True") {
+        const total = Math.ceil(data.totalResults / 10);
+        setTotalPages(total);
+
+        if (newPage === 1) setMovies(data.Search);
+        else setMovies((prev) => [...prev, ...data.Search]);
+      } else {
+        setMovies([]);
+        setTotalPages(1);
+      }
+    } catch (err) {
+      console.log("Fetch error", err);
     }
+
+    setLoading(false);
   };
 
-  // ---------------- Default Movies ----------------
+  // -------- Default Indian Suggestions ----------
   useEffect(() => {
-    fetchMovies("avengers", 1);
+    const indianTerms = ["bollywood", "tamil", "telugu", "kannada", "india"];
+    const random = indianTerms[Math.floor(Math.random() * indianTerms.length)];
+
+    setQuery(random);
+    setPage(1);
+    fetchMovies(random, 1);
   }, []);
 
-  // ---------------- Search ----------------
+  // -------- Search ----------
   const handleSearch = () => {
     if (!searchText.trim()) return;
 
@@ -44,7 +59,7 @@ function Home() {
     fetchMovies(searchText, 1);
   };
 
-  // ---------------- Load More ----------------
+  // -------- Load More ----------
   const handleLoadMore = () => {
     if (page >= totalPages) return;
 
@@ -53,7 +68,7 @@ function Home() {
     fetchMovies(query, next);
   };
 
-  // ---------------- Favorites ----------------
+  // -------- Favorites ----------
   const addToFavorites = (movie) => {
     let stored = JSON.parse(localStorage.getItem("favorites")) || [];
 
@@ -70,9 +85,7 @@ function Home() {
     background: document.body.classList.contains("dark")
       ? "#1f1f1f"
       : "#f5f5f5",
-    color: document.body.classList.contains("dark")
-      ? "white"
-      : "black",
+    color: document.body.classList.contains("dark") ? "white" : "black",
     padding: "12px",
     borderRadius: "10px",
     transition: "0.2s",
@@ -81,18 +94,11 @@ function Home() {
   };
 
   return (
-    <div
-  style={{
-    padding: "30px 20px",
-    width: "95%",
-    maxWidth: "1400px",
-    margin: "20px auto",
-  }}
->
+    <div style={{ padding: "30px 20px", width: "95%", maxWidth: "1400px", margin: "20px auto" }}>
       <h1>Movie Search</h1>
 
       {/* Search */}
-      <div style={{ display: "flex", gap: "10px" }}>
+      <div style={{ display: "flex", gap: "10px", width: "100%", maxWidth: 600, margin: "0 auto" }}>
         <input
           type="text"
           placeholder="Search movies..."
@@ -105,13 +111,15 @@ function Home() {
             border: "none",
           }}
         />
-
         <button onClick={handleSearch}>Search</button>
       </div>
 
       <p style={{ opacity: 0.7, marginTop: "8px" }}>
-        Showing results for: <b>{query}</b>
+        Showing results for: <b>{query || "Suggestions"}</b>
       </p>
+
+      {/* Loading */}
+      {loading && <h3 style={{ textAlign: "center" }}>Loading...</h3>}
 
       {/* GRID */}
       <div
@@ -168,7 +176,7 @@ function Home() {
       {movies.length > 0 && page < totalPages && (
         <button
           onClick={handleLoadMore}
-          style={{ marginTop: "25px", display: "block" }}
+          style={{ marginTop: "25px", display: "block", marginInline: "auto" }}
         >
           Load More
         </button>

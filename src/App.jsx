@@ -7,13 +7,16 @@ import Navbar from "./components/Navbar";
 function App() {
   return (
     <Router>
-      <Navbar />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/movie/:id" element={<MovieDetails />} />
-        <Route path="/favorites" element={<Favorites />} />
-      </Routes>
+      <div className="netflix-navbar">
+        <Navbar />
+      </div>
+      <div className="app-container">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/movie/:id" element={<MovieDetails />} />
+          <Route path="/favorites" element={<Favorites />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
